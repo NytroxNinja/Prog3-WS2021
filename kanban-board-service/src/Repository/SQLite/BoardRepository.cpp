@@ -98,7 +98,25 @@ std::optional<Column> BoardRepository::postColumn(std::string name, int position
 }
 
 std::optional<Prog3::Core::Model::Column> BoardRepository::putColumn(int id, std::string name, int position) {
-    throw NotImplementedException();
+
+    string sqlPostItem =
+        "UPDATE column "
+        "SET name = '" +
+        name + "', position = " + to_string(position) +
+        " WHERE id = " + to_string(id) + ";";
+
+    int result = 0;
+    char *errorMessage = nullptr;
+
+    result = sqlite3_exec(database, sqlPostItem.c_str(), NULL, 0, &errorMessage);
+    handleSQLError(result, errorMessage);
+
+    if (SQLITE_OK == result) {
+        int columnId = sqlite3_last_insert_rowid(database);
+        return Column(columnId, name, position);
+    }
+
+    return std::nullopt;
 }
 
 void BoardRepository::deleteColumn(int id) {
@@ -112,10 +130,6 @@ void BoardRepository::deleteColumn(int id) {
 
     result = sqlite3_exec(database, sqlPostItem.c_str(), NULL, 0, &errorMessage);
     handleSQLError(result, errorMessage);
-
-    //if (SQLITE_OK == result) {
-    //    /* code */
-    //}
 }
 
 std::vector<Item> BoardRepository::getItems(int columnId) {
@@ -151,7 +165,28 @@ std::optional<Item> BoardRepository::postItem(int columnId, std::string title, i
 }
 
 std::optional<Prog3::Core::Model::Item> BoardRepository::putItem(int columnId, int itemId, std::string title, int position) {
-    throw NotImplementedException();
+
+    time_t now = time(0);
+    char *datetime = ctime(&now);
+
+    string sqlPostItem =
+        "UPDATE item "
+        "SET title = '" +
+        title + "', position = " + to_string(position) +
+        " WHERE id = " + to_string(itemId) + " AND column_id = " + to_string(columnId) + ";";
+
+    int result = 0;
+    char *errorMessage = nullptr;
+
+    result = sqlite3_exec(database, sqlPostItem.c_str(), NULL, 0, &errorMessage);
+    handleSQLError(result, errorMessage);
+
+    int itemId2 = INVALID_ID;
+    if (SQLITE_OK == result) {
+        itemId2 = sqlite3_last_insert_rowid(database);
+        return Item(itemId2, title, position, datetime);
+    }
+    return std::nullopt;
 }
 
 void BoardRepository::deleteItem(int columnId, int itemId) {
@@ -165,10 +200,6 @@ void BoardRepository::deleteItem(int columnId, int itemId) {
 
     result = sqlite3_exec(database, sqlPostItem.c_str(), NULL, 0, &errorMessage);
     handleSQLError(result, errorMessage);
-
-    if (SQLITE_OK == result) {
-        /* code */
-    }
 }
 
 void BoardRepository::handleSQLError(int statementResult, char *errorMessage) {
