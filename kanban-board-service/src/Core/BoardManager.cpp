@@ -58,12 +58,12 @@ std::string BoardManager::postColumn(std::string request) {
 std::string BoardManager::putColumn(int columnId, std::string request) {
 
     std::optional<Column> parsedColumnOptional = parser.convertColumnToModel(columnId, request);
-
     if (false == parsedColumnOptional.has_value()) {
         return parser.getEmptyResponseString();
     }
-    Column column = parsedColumnOptional.value();
-    std::optional<Column> putColumn = repository.putColumn(columnId, column.getName(), column.getPos());
+    Column parsedColumn = parsedColumnOptional.value();
+
+    std::optional<Column> putColumn = repository.putColumn(columnId, parsedColumn.getName(), parsedColumn.getPos());
 
     if (putColumn) {
         return parser.convertToApiString(putColumn.value());
@@ -103,6 +103,7 @@ std::string BoardManager::postItem(int columnId, std::string request) {
 
     Item item = parsedItemOptional.value();
     std::optional<Item> postedItem = repository.postItem(columnId, item.getTitle(), item.getPos());
+
     if (postedItem) {
         return parser.convertToApiString(postedItem.value());
     } else {
